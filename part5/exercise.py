@@ -1,17 +1,23 @@
-from part5.calc5 import PLUS
-
 INTEGER = 'INTEGER'
 EOF = 'EOF'
-PULS = 'PLUS'
+PLUS = 'PLUS'
 MINUS = 'MINUS'
 MUL = 'MUL'
 DIV = 'DIV'
+LPAREN = 'LPAREN'
+RPAREN = 'RPAREN'
 
 
 class Token:
     def __init__(self, type, value):
         self.type = type
         self.value = value
+
+    def __eq__(self, other):
+        return self.type == other.type and self.value == other.value
+
+    def __repr__(self) -> str:
+        return 'Token({}, {})'.format(self.type, self.value)
 
 
 class Lexer:
@@ -20,11 +26,15 @@ class Lexer:
         self.pos = 0
         self.curr_char = self.text[self.pos]
 
-    def advance(self, text):
+    def error(self):
+        raise Exception('Unknown symbols')
+
+    def advance(self):
         self.pos += 1
         if self.pos > len(self.text) - 1:
             self.curr_char = None
-        self.curr_char = self.text[self.pos]
+        else:
+            self.curr_char = self.text[self.pos]
 
     def skip_whitespace(self):
         while self.curr_char is not None and self.curr_char.isspace():
@@ -38,16 +48,89 @@ class Lexer:
         return int(result)
 
     def get_next_token(self):
+        if self.curr_char is None:
+            return Token(EOF, None)
         if self.curr_char.isspace():
             self.skip_whitespace()
-            self.get_next_token()
+            return self.get_next_token()
         if self.curr_char.isdigit():
             return Token(INTEGER, self.integer())
         if self.curr_char == '+':
+            self.advance()
             return Token(PLUS, '+')
         if self.curr_char == '-':
+            self.advance()
             return Token(MINUS, '-')
         if self.curr_char == '*':
+            self.advance()
             return Token(MUL, '*')
         if self.curr_char == '/':
+            self.advance()
             return Token(DIV, '/')
+        self.error()
+
+
+class Interpreter:
+    def __init__(self, lexer: Lexer):
+        self.lexer = lexer
+        self.curr_token = lexer.get_next_token()
+
+    def error(self):
+        raise Exception('Invalid syntax')
+
+    def eat(self, token_type):
+        if self.curr_token.type == token_type:
+            value = self.curr_token.value
+            self.curr_token = self.lexer.get_next_token()
+            return value
+        self.error()
+
+    def factor(self):
+        return self.eat(INTEGER)
+
+    def term(self):
+        factor = self.factor()
+        while self.curr_token.type != EOF and self.curr_token.type in (MUL,
+                                                                       DIV):
+            if self.curr_token.type == MUL:
+                op = self.eat(MUL)
+            else:
+                op = self.eat(DIV)
+            rfactor = self.factor()
+            if op == '*':
+                factor *= rfactor
+            else:
+                factor /= rfactor
+        return factor
+
+    def expr(self):
+        term = self.term()
+        while self.curr_token.type != EOF and self.curr_token.type in (PLUS,
+                                                                       MINUS):
+            if self.curr_token.type == PLUS:
+                op = self.eat(PLUS)
+            else:
+                op = self.eat(MINUS)
+            rterm = self.term()
+            if op == '+':
+                term += rterm
+            else:
+                term -= rterm
+        return term
+
+
+def main():
+    while True:
+        try:
+            text = input('calc> ')
+        except EOFError:
+            break
+        if not text:
+            continue
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
+        print(interpreter.expr())
+
+
+if __name__ == "__main__":
+    main()
