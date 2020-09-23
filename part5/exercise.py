@@ -36,10 +36,6 @@ class Lexer:
         else:
             self.curr_char = self.text[self.pos]
 
-    def skip_whitespace(self):
-        while self.curr_char is not None and self.curr_char.isspace():
-            self.advance()
-
     def integer(self):
         result = ''
         while self.curr_char is not None and self.curr_char.isdigit():
@@ -51,7 +47,7 @@ class Lexer:
         if self.curr_char is None:
             return Token(EOF, None)
         if self.curr_char.isspace():
-            self.skip_whitespace()
+            self.advance()
             return self.get_next_token()
         if self.curr_char.isdigit():
             return Token(INTEGER, self.integer())
@@ -67,6 +63,12 @@ class Lexer:
         if self.curr_char == '/':
             self.advance()
             return Token(DIV, '/')
+        if self.curr_char == '(':
+            self.advance()
+            return Token(LPAREN, '(')
+        if self.curr_char == ')':
+            self.advance()
+            return Token(RPAREN, ')')
         self.error()
 
 
