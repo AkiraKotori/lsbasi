@@ -88,7 +88,13 @@ class Interpreter:
         self.error()
 
     def factor(self):
-        return self.eat(INTEGER)
+        if self.curr_token.type == INTEGER:
+            return self.eat(INTEGER)
+        if self.curr_token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
 
     def term(self):
         factor = self.factor()
