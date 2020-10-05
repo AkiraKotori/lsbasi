@@ -3,9 +3,9 @@ class Node:
         self.left = left
         self.right = right
 
-class translator_RPN:
-    def __init__(self):
-        pass
 
-    def __call__(self,expr):
-        pass
+class translator_RPN:
+    def __init__(self,text):
+        self.text=text
+
+        
