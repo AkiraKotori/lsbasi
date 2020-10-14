@@ -25,6 +25,7 @@ class Lexer:
         self.curr_token = None
 
     def advance(self):
+        self.pos += 1
         if self.pos < len(self.text):
             self.curr_char = self.text[self.pos]
         else:
@@ -78,7 +79,7 @@ class BinOp(AST):
 
 class Num(AST):
     def __init__(self, token: Token):
-        self.type = token.type
+        self.token = token
         self.value = token.value
 
 
@@ -102,8 +103,67 @@ class Parser(AST):
             self.eat(INTEGER)
             return Num(curr_token)
 
+    def term(self):
+        node = self.factor()
+        while self.curr_token.type in (MUL, DIV):
+            curr_token = self.curr_token
+            if self.curr_token.type == MUL:
+                self.eat(MUL)
+            elif self.curr_token.type == DIV:
+                self.eat(DIV)
+            node = BinOp(node, curr_token, self.factor())
+        return node
+
+    def expr(self):
+        node = self.term()
+        while self.curr_token.type in (PLUS, MINUS):
+            curr_token = self.curr_token
+            if self.curr_token.type == PLUS:
+                self.eat(PLUS)
+            elif self.curr_token.type == MINUS:
+                self.eat(MINUS)
+            node = BinOp(node, curr_token, self.term())
+        return node
 
 
-class translator_RPN:
-    def __init__(self, text):
-        self.text = text
+result = []
+
+
+def translator_RPN(node):
+    if isinstance(node, Num):
+        result.append(node.value)
+    else:
+        translator_RPN(node.left)
+        translator_RPN(node.right)
+        result.append(node.op.value)
+
+
+def calc(left, op, right):
+    return eval('{}{}{}'.format(left, op, right))
+
+
+def calc_RPN(text):
+    global result
+    stack = []
+    for elem in result:
+        if isinstance(elem, int):
+            stack.append(elem)
+        else:
+            right = stack.pop()
+            left = stack.pop()
+            stack.append(calc(left, elem, right))
+    print('result: {} = {}'.format(eval(text), stack.pop()))
+    result = []
+
+
+def check_RPN(text):
+    parser = Parser(text)
+    node = parser.expr()
+    translator_RPN(node)
+    calc_RPN(text)
+
+
+if __name__ == "__main__":
+    check_RPN('1+2*3+4/5-6*7/8+9/10')
+    check_RPN('1')
+    check_RPN('22/33')
