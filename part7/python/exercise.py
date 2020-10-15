@@ -102,6 +102,11 @@ class Parser(AST):
         if curr_token.type == INTEGER:
             self.eat(INTEGER)
             return Num(curr_token)
+        if curr_token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
 
     def term(self):
         node = self.factor()
@@ -163,7 +168,44 @@ def check_RPN(text):
     calc_RPN(text)
 
 
+def translator_RPN2(node):
+    if isinstance(node,Num):
+        return node.value
+    else:
+        left=translator_RPN2(node.left)
+        right=translator_RPN2(node.right)
+        op=node.op.value
+        return '{} {} {}'.format(left,right,op)
+
+def check_RPN2(text):
+    parser = Parser(text)
+    node = parser.expr()
+    print(translator_RPN2(node))
+
+
+def translator_LISP(node):
+    if isinstance(node,Num):
+        return node.value
+    else:
+        left=translator_LISP(node.left)
+        op=node.op.value
+        right=translator_LISP(node.right)
+        return '({} {} {})'.format(op,left,right)
+    
+def check_LISP(text):
+    parser = Parser(text)
+    node = parser.expr()
+    print(translator_LISP(node))
+
+
 if __name__ == "__main__":
-    check_RPN('1+2*3+4/5-6*7/8+9/10')
-    check_RPN('1')
-    check_RPN('22/33')
+    # check_RPN2('1+2*3+4/5-6*7/8+9/10')
+    # check_RPN2('1')
+    # check_RPN2('22/33')
+    # check_RPN2('(1+2)/3*4+5-6')
+    # check_RPN2('(1*(2+3)-4)+6/8')
+    check_LISP('1+2*3+4/5-6*7/8+9/10')
+    check_LISP('7 + 5 * 2 - 3')
+    check_LISP('22/33')
+    check_LISP('(1+2)/3*4+5-6')
+    check_LISP('(1*(2+3)-4)+6/8')
