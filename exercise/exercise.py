@@ -185,9 +185,8 @@ class Parser:
         return node
 
 
-
 if __name__ == "__main__":
-    lexer=Lexer('-+-+22++-33')
-    parser=Parser(lexer)
-    node=parser.expr()
+    lexer = Lexer('-+-+22++-33')
+    parser = Parser(lexer)
+    node = parser.expr()
     print(node)
