@@ -127,6 +127,24 @@ class UnaryOp(AST):
         self.expr = expr
 
 
+class Var(AST):
+    def __init__(self, token: Token):
+        self.token = token
+        self.value = token.value
+
+
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+
+class Compound(AST):
+    def __init__(self):
+        self.child = []
+
+
 class NoOp(AST):
     pass
 
@@ -145,6 +163,12 @@ class Parser:
         else:
             self.error()
 
+    def var(self):
+        curr_token = self.curr_token
+        if curr_token.type == ID:
+            self.eat(ID)
+            return Var(curr_token)
+
     def factor(self):
         curr_token = self.curr_token
         if curr_token.type == INTEGER:
@@ -161,6 +185,9 @@ class Parser:
             else:
                 self.eat(MINUS)
             return UnaryOp(curr_token, self.factor())
+        if curr_token.type == ID:
+            self.eat(ID)
+            return Token(ID, curr_token)
 
     def term(self):
         node = self.factor()
@@ -183,6 +210,13 @@ class Parser:
                 self.eat(MINUS)
             node = BinOp(node, curr_token, self.term())
         return node
+
+    def assign(self):
+        id = self.factor()
+        if self.curr_token.type == ASSIGN:
+            curr_token = self.curr_token
+            self.eat(ASSIGN)
+            return Assign(id, curr_token, self.expr())
 
 
 if __name__ == "__main__":
